@@ -5,7 +5,7 @@ struct Vec3
 {
 	Vec3(const T& x_, const T& y_, const T& z_) : x(x_), y(y_), z(z_) {}
 
-	Vec3<T> getNormalized()
+	Vec3<T> getNormalized() const
 	{
 		T norm2 = *this * *this;
 		return std::sqrt(1. / norm2) * *this;

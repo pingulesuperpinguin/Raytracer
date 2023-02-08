@@ -12,7 +12,7 @@ template<typename T>
 class Camera
 {
 public:
-	Camera(const Point3<T>& origin, const Vec3<T>& direction, const T& horizontalFovAngle) : m_origin(origin), m_direction(direction), m_lateralFovAngle(lateralFovAngle)
+	Camera(const Point3<T>& origin, const Vec3<T>& direction, const T& horizontalFovAngle) : m_origin(origin), m_direction(direction), m_horizontalFovAngle(horizontalFovAngle)
 	{}
 
 	Ray<T> getRay(const Viewport<T>& viewport, int row, int col) const
@@ -29,8 +29,8 @@ public:
 		T pL = L / T{ viewport.getWidth() };
 		T ph = h / T{ viewport.getHeight() };
 
-		T dL = T{ col } - T{ viewport.getWidth() } / 2. + 0.5;
-		T dh = T{ row } - T{ viewport.getHeight() } / 2. + 0.5;
+		T dL = T(col) - T(viewport.getWidth()) / 2. + 0.5;
+		T dh = T(row) - T(viewport.getHeight()) / 2. + 0.5;
 
 		Vec3<T> dir = look + pL * dL * right + ph * dh * up;
 	}
@@ -59,8 +59,8 @@ public:
 	const T& getHeight() const { return m_height; }
 	const T& getWidth() const { return m_width; }
 
-	Color<T>& operator()(int col, int row) { return m_pixels[col + row * width]; }
-	const Color<T>& operator()(int col, int row) const { return m_pixels[col + row * width]; }
+	Color<T>& operator()(int col, int row) { return m_pixels[col + row * m_width]; }
+	const Color<T>& operator()(int col, int row) const { return m_pixels[col + row * m_width]; }
 
 private:
 	int m_width;
@@ -81,7 +81,7 @@ template<typename T>
 class SphereGeometry : public IGeometry<T>
 {
 public:
-	SphereGeometry(const Point3<T>& origin, const T& radius) : m_sphere(origin, radius)
+	SphereGeometry(const Point3<T>& origin, const T& radius) : m_sphere{ origin, radius }
 	{}
 
 	virtual T getIntersection(const Ray<T>& ray) override
@@ -113,7 +113,7 @@ class Object
 	friend class Scene<T>;
 
 private:
-	Object(IGeometry<T>* geometry, IColorizer<T>* colorizer, const OpticalProperties& opticalProperties) :
+	Object(IGeometry<T>* geometry, IColorizer<T>* colorizer, const OpticalProperties<T>& opticalProperties) :
 		m_geometry(geometry), m_colorizer(colorizer), m_opticalProperties(opticalProperties)
 	{}
 
@@ -127,7 +127,7 @@ template<typename T>
 class Scene
 {
 public:
-	void addObject(IGeometry<T>* geometry, IColorizer<T>* colorizer, const OpticalProperties& opticalProperties)
+	void addObject(IGeometry<T>* geometry, IColorizer<T>* colorizer, const OpticalProperties<T>& opticalProperties)
 	{
 		Object<T>* obj = new Object<T>(geometry, colorizer, opticalProperties);
 		m_objects.push_back(std::unique_ptr<Object<T> >(obj));
