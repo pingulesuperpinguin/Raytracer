@@ -34,7 +34,7 @@ public:
 
 		Vec3<T> dir = look + pL * dL * right + ph * dh * up;
 
-		return Ray<T>{m_origin, dir};
+		return Ray<T>{m_origin, dir.getNormalized()};
 	}
 
 private:
