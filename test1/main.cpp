@@ -62,7 +62,7 @@ Viewport<RenderType> renderScene()
     Viewport<RenderType> viewport{800, 600};
 
     Scene<RenderType> scene;
-    scene.addObject(new SphereGeometry<RenderType>{ {5.0, 0, 0}, 1.0 }, new FlatColorizer<RenderType>{ {1.0, 0.0, 0.0} }, OpticalProperties<RenderType>{});
+    scene.addObject(new SphereGeometry<RenderType>{ {2.0, 0, 0}, std::sqrt(2.) }, new FlatColorizer<RenderType>{ {1.0, 0.0, 0.0} }, OpticalProperties<RenderType>{});
 
     scene.render(camera, viewport);
 

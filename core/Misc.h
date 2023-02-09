@@ -178,12 +178,12 @@ public:
 
 	void render(const Camera<T>& camera, Viewport<T>& viewport)
 	{
-		for (int i = 0; i < viewport.getWidth(); ++i)
+		for (int col = 0; col < viewport.getWidth(); ++col)
 		{
-			for (int j = 0; j < viewport.getHeight(); ++j)
+			for (int row = 0; row < viewport.getHeight(); ++row)
 			{
-				auto ray = camera.getRay(viewport, i, j);
-				viewport(i, j) = renderRay(ray);
+				auto ray = camera.getRay(viewport, row, col);
+				viewport(col, row) = renderRay(ray);
 			}
 		}
 	}
