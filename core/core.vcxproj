@@ -23,6 +23,7 @@
     <ClInclude Include="Colorizer.h" />
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="Color.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="OpticalProperties.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Viewport.h" />

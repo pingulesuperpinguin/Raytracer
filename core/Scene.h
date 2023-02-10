@@ -29,6 +29,9 @@ template<typename T>
 class Viewport;
 
 template<typename T>
+class ILight;
+
+template<typename T>
 class Object
 {
 	friend class Scene<T>;
@@ -53,11 +56,13 @@ class Scene
 {
 public:
 	void addObject(IGeometry<T>* geometry, IColorizer<T>* colorizer, OpticalProperties<T>* opticalProperties);
+	void addLight(ILight<T>* light);
 	Color<T> renderRay(const Ray<T>& ray);
 	void render(const Camera<T>& camera, Viewport<T>& viewport);
 
 private:
 	std::vector<std::unique_ptr<Object<T> > > m_objects;
+	std::vector<std::unique_ptr<ILight<T> > > m_lights;
 };
 
 #include "Geometry.h"
@@ -65,6 +70,7 @@ private:
 #include "OpticalProperties.h"
 #include "Viewport.h"
 #include "Camera.h"
+#include "Light.h"
 
 
 template<typename T>
@@ -75,16 +81,22 @@ void Scene<T>::addObject(IGeometry<T>* geometry, IColorizer<T>* colorizer, Optic
 }
 
 template<typename T>
+void Scene<T>::addLight(ILight<T>* light)
+{
+	m_lights.emplace_back(light);
+}
+
+template<typename T>
 Color<T> Scene<T>::renderRay(const Ray<T>& ray)
 {
-	T min = std::numeric_limits<T>::infinity();
+	Contact<T> minContact = { std::numeric_limits<T>::infinity(), {0., 0., 0.}, {0., 0., 0.} };
 	Object<T>* minObj = nullptr;
 	for (auto& obj : m_objects)
 	{
-		T intersection = obj->getGeometry().getIntersection(ray);
-		if ((intersection != NO_INTERSECTION<T>()) && (min > intersection))
+		Contact<T> intersection = obj->getGeometry().getIntersection(ray);
+		if ((intersection.distance != NO_INTERSECTION<T>()) && (minContact.distance > intersection.distance))
 		{
-			min = obj->getGeometry().getIntersection(ray);
+			minContact = intersection;
 			minObj = obj.get();
 		}
 	}
@@ -92,7 +104,18 @@ Color<T> Scene<T>::renderRay(const Ray<T>& ray)
 	if (minObj == nullptr)
 		return NO_INTERSECTION_COLOR<T>();
 
-	return minObj->getColorizer().getColor();
+	auto& op = minObj->getOpticalProperties();
+
+	Color<T> col = minObj->getColorizer().getColor();
+	Color<T> finalColor = op.ambient * col;
+
+	for (auto& light : m_lights)
+	{
+		Color<T> lightColor = op.diffusion * light->getLightAtContact(minContact);
+		finalColor = finalColor + Color<T>{ lightColor.r* col.r, lightColor.g* col.g, lightColor.b* col.b};
+	}
+
+	return finalColor;
 }
 
 template<typename T>

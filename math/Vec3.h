@@ -58,6 +58,8 @@ struct Ray
 {
 	Point3<T> origin;
 	Vec3<T> direction;
+
+	Point3<T> getPointAtAbscice(T s) const { return origin + s * direction; }
 };
 
 template<typename T>
