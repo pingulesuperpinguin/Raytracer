@@ -93,3 +93,8 @@ T intersect(const Sphere<T>& sphere, const Ray<T>& ray)
 	return NO_INTERSECTION<T>();
 }
 
+template<typename T>
+constexpr T pi() { return 3.14159265358979323846; }
+
+template<typename T>
+constexpr T deg_to_rad(T deg) { return deg / 180. * pi<T>(); }

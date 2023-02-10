@@ -1,25 +1,8 @@
 #include <SFML\Graphics.hpp>
 
-#include <core/Misc.h>
+#include <core/Scene.h>
 
 using RenderType = double;
-
-template<typename T>
-std::tuple<T, T> getMinMaxOnViewport(const Viewport<T>& viewport)
-{
-    T min = std::numeric_limits<T>::infinity();
-    T max = - std::numeric_limits<T>::infinity();
-    for (int row = 0; row < viewport.getHeight(); ++row)
-    {
-        for (int col = 0; col < viewport.getWidth(); ++col)
-        {
-            const Color<T>& c = viewport(col, row);
-            min = std::min(min, std::min(c.r, std::min(c.g, c.b)));
-            max = std::max(max, std::max(c.r, std::min(c.g, c.b)));
-        }
-    }
-    return { min, max };
-}
 
 template<typename T>
 sf::Texture viewportToTexture(const Viewport<T>& viewport)
@@ -50,21 +33,15 @@ sf::Texture viewportToTexture(const Viewport<T>& viewport)
     return texture;
 }
 
-template<typename T>
-constexpr T pi() { return 3.14159265358979323846; }
-
-template<typename T>
-constexpr T deg_to_rad(T deg) { return deg / 180. * pi<T>(); }
-
 Viewport<RenderType> renderScene()
 {
     Camera<RenderType> camera{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, deg_to_rad(90.0)};
     Viewport<RenderType> viewport{800, 600};
 
     Scene<RenderType> scene;
-    scene.addObject(new SphereGeometry<RenderType>{ {5.0, 0, 0}, std::sqrt(1) }, new FlatColorizer<RenderType>{ {1.0, 0.0, 0.0} }, OpticalProperties<RenderType>{});
-    scene.addObject(new SphereGeometry<RenderType>{ {5.0, 1.0, 0}, std::sqrt(0.25) }, new FlatColorizer<RenderType>{ {0.0, 1.0, 0.0} }, OpticalProperties<RenderType>{});
-    scene.addObject(new SphereGeometry<RenderType>{ {5.0, 0, 1.0}, std::sqrt(0.25) }, new FlatColorizer<RenderType>{ {0.0, 0.0, 1.0} }, OpticalProperties<RenderType>{});
+    scene.addObject(new SphereGeometry<RenderType>{ {5.0, 0, 0}, std::sqrt(1) }, new FlatColorizer<RenderType>{ {1.0, 0.0, 0.0} }, new OpticalProperties<RenderType>{});
+    scene.addObject(new SphereGeometry<RenderType>{ {5.0, 1.0, 0}, std::sqrt(0.25) }, new FlatColorizer<RenderType>{ {0.0, 1.0, 0.0} }, new OpticalProperties<RenderType>{});
+    scene.addObject(new SphereGeometry<RenderType>{ {5.0, 0, 1.0}, std::sqrt(0.25) }, new FlatColorizer<RenderType>{ {0.0, 0.0, 1.0} }, new OpticalProperties<RenderType>{});
 
     scene.render(camera, viewport);
 
