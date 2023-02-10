@@ -17,7 +17,7 @@ public:
 
 	Ray<T> getRay(const Viewport<T>& viewport, int row, int col) const
 	{
-		T verticalFovAngle = 2. * std::atan(T{ viewport.getHeight() } / T{ viewport.getWidth() } *std::tan(m_horizontalFovAngle / 2.));
+		T verticalFovAngle = 2. * std::atan(T(viewport.getHeight()) / T(viewport.getWidth()) *std::tan(m_horizontalFovAngle / 2.));
 				
 		Vec3<T> look = m_direction.getNormalized();
 		Vec3<T> right = (look ^ Vec3<T>{0., 1., 0.}).getNormalized();
@@ -26,13 +26,15 @@ public:
 		T L = std::tan(m_horizontalFovAngle / 2.) * 2. * 1.;
 		T h = std::tan(verticalFovAngle / 2.) * 2. * 1.;
 
-		T pL = L / T{ viewport.getWidth() };
-		T ph = h / T{ viewport.getHeight() };
+		T pL = L / T(viewport.getWidth());
+		T ph = h / T(viewport.getHeight());
 
 		T dL = T(col) - T(viewport.getWidth()) / 2. + 0.5;
 		T dh = T(row) - T(viewport.getHeight()) / 2. + 0.5;
 
 		Vec3<T> dir = look + pL * dL * right + ph * dh * up;
+
+		return Ray<T>{m_origin, dir};
 	}
 
 private:
@@ -56,8 +58,8 @@ public:
 	Viewport(int width, int height) : m_width(width), m_height(height), m_pixels(width * height)
 	{}
 
-	const T& getHeight() const { return m_height; }
-	const T& getWidth() const { return m_width; }
+	const int& getHeight() const { return m_height; }
+	const int& getWidth() const { return m_width; }
 
 	Color<T>& operator()(int col, int row) { return m_pixels[col + row * m_width]; }
 	const Color<T>& operator()(int col, int row) const { return m_pixels[col + row * m_width]; }
@@ -74,7 +76,7 @@ class IGeometry
 public:
 	virtual ~IGeometry() = default;
 
-	virtual T getIntersection(const Ray<T>& ray) = 0;
+	virtual T getIntersection(const Ray<T>& ray) const = 0;
 };
 
 template<typename T>
@@ -84,7 +86,7 @@ public:
 	SphereGeometry(const Point3<T>& origin, const T& radius) : m_sphere{ origin, radius }
 	{}
 
-	virtual T getIntersection(const Ray<T>& ray) override
+	virtual T getIntersection(const Ray<T>& ray) const override
 	{
 		return intersect(m_sphere, ray);
 	}
@@ -97,7 +99,7 @@ template<typename T>
 class IColorizer
 {
 public:
-	virtual Color<T> getColor() = 0;
+	virtual Color<T> getColor() const = 0;
 	virtual ~IColorizer() = default;
 };
 
@@ -108,7 +110,7 @@ public:
 	FlatColorizer(const Color<T>& color) : m_color(color)
 	{}
 
-	virtual Color<T> getColor() { return m_color; }
+	virtual Color<T> getColor() const override { return m_color; }
 
 private:
 	Color<T> m_color;
@@ -131,11 +133,18 @@ private:
 		m_geometry(geometry), m_colorizer(colorizer), m_opticalProperties(opticalProperties)
 	{}
 
+	const IGeometry<T>& getGeometry() const { return *m_geometry; }
+	const IColorizer<T>& getColorizer() const { return *m_colorizer; }
+	const OpticalProperties<T> getOpticalProperties() const { return m_opticalProperties; }
+
 private:
 	std::unique_ptr<IGeometry<T> > m_geometry;
 	std::unique_ptr<IColorizer<T> > m_colorizer;
 	OpticalProperties<T> m_opticalProperties;
 };
+
+template<typename T>
+Color<T> NO_INTERSECTION_COLOR() { return Color<T>{0.0, 1.0, 1.0}; }
 
 template<typename T>
 class Scene
@@ -145,6 +154,38 @@ public:
 	{
 		Object<T>* obj = new Object<T>(geometry, colorizer, opticalProperties);
 		m_objects.push_back(std::unique_ptr<Object<T> >(obj));
+	}
+
+	Color<T> renderRay(const Ray<T>& ray)
+	{
+		T min = std::numeric_limits<T>::infinity();
+		Object<T>* minObj = nullptr;
+	    for (auto& obj : m_objects)
+	    {
+			T intersection = obj->getGeometry().getIntersection(ray);
+			if ((intersection != NO_INTERSECTION<T>()) && (min > intersection))
+			{
+				min = obj->getGeometry().getIntersection(ray);
+				minObj = obj.get();
+			}
+	    }
+
+		if (minObj == nullptr)
+			return NO_INTERSECTION_COLOR<T>();
+
+		return minObj->getColorizer().getColor();
+	}
+
+	void render(const Camera<T>& camera, Viewport<T>& viewport)
+	{
+		for (int i = 0; i < viewport.getWidth(); ++i)
+		{
+			for (int j = 0; j < viewport.getHeight(); ++j)
+			{
+				auto ray = camera.getRay(viewport, i, j);
+				viewport(i, j) = renderRay(ray);
+			}
+		}
 	}
 
 private:
