@@ -1,5 +1,19 @@
 #include <SFML\Graphics.hpp>
 
+#include <core/Misc.h>
+
+using RenderType = double;
+
+Viewport<RenderType> renderScene()
+{
+    Camera<RenderType> camera{{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, 0.8};
+    Viewport<RenderType> viewport{1024, 768};
+
+    Scene<RenderType> scene;
+    scene.addObject(new SphereGeometry<RenderType>{ {2.0, 0, 0}, 1.0 }, new FlatColorizer<RenderType>{ {1.0, 1.0, 1.0} }, OpticalProperties<RenderType>{});
+
+    scene.render(camera, viewport);
+};
 
 int main()
 {
